@@ -7,6 +7,7 @@
   --finish-color: #900a0a;
   --button-color: #585858;
   --gradient-text-color: linear-gradient(to bottom, #fff, #d5d8e1);
+  --animation-time: spin 10s linear forwards;
 }
 
 @font-face {

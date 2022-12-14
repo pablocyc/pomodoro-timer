@@ -13,6 +13,7 @@ class PomodoroTimer extends HTMLElement {
         if (this.minutes.disabled) {
           this.setTimer(false);
           this.setConfig("edit", false, "START");
+          this.progress.style.animation = "";
         } else {
           this.setConfig("default", true, "START");
         }
@@ -24,9 +25,15 @@ class PomodoroTimer extends HTMLElement {
           this.setConfig("default", true, "STOP");
           this.setTimer(true);
           button.classList.remove("start");
+          if (this.progress.style.animationPlayState !== "paused") {
+            this.progress.style.animation = "var(--animation-time)";
+            this.progress.style.animationDuration = `${this.totalTimer}s`;
+          }
+          this.progress.style.animationPlayState = "running";
         } else {
           this.setTimer(false);
           this.setConfig("stop", true, "START");
+          this.progress.style.animationPlayState = "paused";
         }
       }
     }
@@ -70,8 +77,31 @@ class PomodoroTimer extends HTMLElement {
           -5px 14px 44px #000,
           5px -16px 50px #fff4;
         position: relative;
-        border: 9px solid var(--timer-color);
         box-sizing: content-box;
+        position: relative;
+      }
+
+      svg{
+        width: 520px;
+        height: 520px;
+        position: absolute;
+        box-sizing: content-box;
+        z-index: -5;
+        transform: rotate(91deg);
+      }
+
+      .loader circle{
+        stroke: var(--timer-color);
+        fill: transparent;
+        stroke-width: 9;
+        stroke-dasharray: 1603;
+        stroke-dashoffset: 0;
+      }
+
+      @keyframes spin {
+        100% {
+          stroke-dashoffset: 1603;
+        }
       }
 
       .timer {
@@ -152,10 +182,11 @@ class PomodoroTimer extends HTMLElement {
       min--;
 
       if (min < 0) {
+        clearInterval(this.nIntervalID);
         this.pomodoro.style.setProperty("--timer-color", "var(--finish-color)");
+        this.progress.style.animation = "";
         min = 0;
         sec = 0;
-        clearInterval(this.nIntervalID);
         this.nIntervalID = null;
       }
     }
@@ -164,6 +195,8 @@ class PomodoroTimer extends HTMLElement {
   }
 
   setTimer (status) {
+    this.totalTimer = parseInt(this.minutes.value) * 60 + parseInt(this.seconds.value);
+    console.log("🚀 ~ totalTimer: ", this.totalTimer);
     if (status) {
       this.nIntervalID = setInterval(() => {
         const minute = this.minutes.value;
@@ -177,10 +210,11 @@ class PomodoroTimer extends HTMLElement {
   }
 
   init () {
-    this.pomodoro = this.shadowRoot.querySelector(".pomodoro");
+    this.pomodoro = this.shadowRoot.querySelector(".loader");
     this.minutes = this.shadowRoot.querySelectorAll("input")[0];
     this.seconds = this.shadowRoot.querySelectorAll("input")[1];
     this.start = this.shadowRoot.querySelector(".start");
+    this.progress = this.shadowRoot.querySelector("circle");
   }
 
   connectedCallback() {
@@ -193,6 +227,9 @@ class PomodoroTimer extends HTMLElement {
     this.shadowRoot.innerHTML = /* html */`
     <style>${PomodoroTimer.styles}</style>
     <div class="pomodoro">
+      <svg class="loader">
+        <circle cx="260" cy="260" r="255" stroke-linecap="round"></circle>
+      </svg>
       <div class="timer">
         <input disabled value="15" type="number" min="0" max="59" class="time-text">
         <span class="time-text">:</span>
